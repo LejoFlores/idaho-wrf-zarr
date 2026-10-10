@@ -4,6 +4,7 @@
 #   N=$(python wrf_to_zarr.py ntasks --config config.yaml --store surface_met)
 #   sbatch --array=0-$((N-1))%40 --export=ALL,STORE=surface_met slurm/convert.sbatch
 #SBATCH --job-name=wrf-zarr
+#SBATCH --partition=bsudfq          # Borah's default CPU partition (48 cores, 192 GB per node)
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=16G

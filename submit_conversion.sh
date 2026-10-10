@@ -3,7 +3,8 @@
 # for each that starts when its array finishes.
 #   ./submit_conversion.sh                      # every store in config.yaml
 #   ./submit_conversion.sh surface_met land_hydro
-# Throttle with MAX_RUNNING (default 40 tasks at once per store).
+# Throttle with MAX_RUNNING (default 40 tasks at once per store). Borah's bsudfq QOS allows
+# 384 CPUs per user, so with 2-CPU tasks keep the sum across running stores under 192.
 set -euo pipefail
 cd "$(dirname "$0")"
 source slurm/env.sh

@@ -3,12 +3,12 @@
 #   sbatch slurm/inventory.sbatch   # defaults to all 12 volumes under /bsushare/leaf-shared/subset-output-wrf
 #SBATCH --job-name=wrf-inventory
 #SBATCH --nodes=1
+#SBATCH --partition=bsudfq          # Borah's default CPU partition (48 cores, 192 GB per node)
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=32G
 #SBATCH --time=04:00:00
 #SBATCH --output=logs/%x-%j.out
-# Check partition names with `sinfo` and add e.g.:  #SBATCH --partition=<name>
 set -euo pipefail
 source "${SLURM_SUBMIT_DIR:?submit from the repo folder}/slurm/env.sh"
 ROOT=${1:-/bsushare/leaf-shared/subset-output-wrf}

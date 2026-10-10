@@ -1,6 +1,7 @@
 #!/bin/bash
 #   sbatch --export=ALL,STORE=surface_met slurm/verify.sbatch
 #SBATCH --job-name=wrf-verify
+#SBATCH --partition=bsudfq          # Borah's default CPU partition (48 cores, 192 GB per node)
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
