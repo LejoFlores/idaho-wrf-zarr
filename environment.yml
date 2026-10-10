@@ -1,0 +1,16 @@
+# conda env create -f environment.yml && conda activate wrf-zarr
+name: wrf-zarr
+channels: [conda-forge]
+dependencies:
+  - python=3.12
+  - xarray>=2025.6
+  - zarr>=3.1
+  - dask
+  - netcdf4
+  - pyproj
+  - pandas
+  - pyyaml
+  - s3fs        # later: copying stores to OSN or S3
+  - pip
+  - pip:
+      - xwrf    # optional: open the original wrfout files the same way for comparison

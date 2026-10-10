@@ -1,0 +1,68 @@
+# Configuration for wrf_to_zarr.py, verify_zarr.py and make_timeseries_store.py.
+# Paths assume the scripts are cloned to /bsushare/leaf-shared/idaho-wrf-zarr.
+# Variable lists are a first guess; check them against inventory/variables.csv.
+# Variables a store lists but the files lack are skipped with a warning and
+# recorded in the store's attributes.
+
+inventory_dir: /bsushare/leaf-shared/idaho-wrf-zarr/inventory  # output of wrf_inventory.py
+# Source: /bsushare/leaf-shared/subset-output-wrf/volXX/wrf_out/wy_YYYY/d02 (12 volumes)
+domain: d02                                            # the 1 km domain
+duplicate_times: first                                 # first | last, when two files share an hour
+# A wrfout, wrfinput or geo_em file for d02. Needed only if the per-variable files lack
+# WRF's projection attributes (MAP_PROJ, TRUELAT1, ...); also supplies XLAT/XLONG.
+grid_file: null
+# Bucket sizes for I_<VAR> counters, used only if the files lack BUCKET_MM / BUCKET_J.
+bucket_mm: null
+bucket_j: null
+
+output:
+  root: /bsushare/leaf-shared/idaho-wrf-1km-zarr        # one <store>.zarr each; check quota first
+  zarr_format: 3
+  compressor: {cname: zstd, clevel: 3, shuffle: shuffle}   # Blosc; lossless
+
+time:
+  start: "1986-10-01T00:00"   # start of WY1987, the first folder on Borah
+  end: "2017-09-30T23:00"     # end of WY2017
+  freq_hours: 1
+
+dataset_attrs:
+  title: Idaho 1 km WRF reanalysis, WY1986-2017
+  institution: Boise State University
+  source: WRF driven by NARR
+  references: Rudisill, Flores and McNamara 2021, doi:10.1175/JHM-D-20-0018.1
+
+stores:
+  static:
+    # Read from the first output time; no time dimension.
+    variables: [HGT, LANDMASK, XLAND, LU_INDEX, IVGTYP, ISLTYP, COSALPHA, SINALPHA, ZS, DZS]
+
+  surface_met:
+    chunks: {time: 24}            # one object per variable per day, full map
+    hours_per_task: 720           # each SLURM array task writes 30 days
+    variables: [T2, Q2, U10, V10, PSFC, SWDOWN, GLW, TSK, HFX, LH, PBLH]
+    accumulated: [RAINNC, RAINC, RAINSH]          # stored as hourly amounts named <VAR>_1h
+    derived:
+      PRECIP:
+        sum_of: [RAINNC, RAINC, RAINSH]
+        units: mm
+        long_name: hourly total precipitation
+        standard_name: precipitation_amount
+
+  land_hydro:
+    chunks: {time: 24}
+    hours_per_task: 720
+    variables: [SNOW, SNOWH, SNOWC, ALBEDO, SMOIS, SH2O, TSLB, CANWAT]
+    accumulated: [SNOWNC, ACSNOM, SFROFF, UDROFF]
+
+  atmos_3d:
+    chunks: {time: 1}             # a training sample reads one hour of the whole column
+    shards: {time: 24}            # ...but objects on disk hold a day, to keep file counts down
+    hours_per_task: 168
+    destagger: true               # put U, V, W, PH on the mass grid
+    variables: [U, V, W, T, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, P, PB, PH, PHB]
+
+timeseries:
+  # make_timeseries_store.py: a copy chunked for long series at points.
+  name: surface_timeseries
+  from: {surface_met: [T2, Q2, PRECIP, SWDOWN], land_hydro: [SNOW, SNOWH]}
+  chunks: {time: 8760, y: 32, x: 32}
