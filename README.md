@@ -38,8 +38,9 @@ sbatch --array=0-$(( $(python make_timeseries_store.py ntasks --config config.ya
 ```
 
 Submit jobs from the repo folder; they find `slurm/env.sh` through `$SLURM_SUBMIT_DIR`.
-`slurm/env.sh` activates the `wrf-zarr` env from `~/miniconda3`, or from the
-`conda/23.1.0` module if that's missing. Jobs run on `bsudfq`; its QOS caps a user
+`slurm/env.sh` activates the `wrf-zarr` env using the conda you submit from (or
+`$WRF_ZARR_CONDA_SH`, a few usual install folders, then the `conda/23.1.0` module);
+each job log prints which python it got. Jobs run on `bsudfq`; its QOS caps a user
 at 384 CPUs, which `MAX_RUNNING` in `submit_conversion.sh` respects.
 
 ## Files
