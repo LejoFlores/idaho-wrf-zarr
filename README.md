@@ -41,7 +41,12 @@ Submit jobs from the repo folder; they find `slurm/env.sh` through `$SLURM_SUBMI
 `slurm/env.sh` activates the `wrf-zarr` env using the conda you submit from (or
 `$WRF_ZARR_CONDA_SH`, a few usual install folders, then the `conda/23.1.0` module);
 each job log prints which python it got. Jobs run on `bsudfq`; its QOS caps a user
-at 384 CPUs, which `MAX_RUNNING` in `submit_conversion.sh` respects.
+at 384 CPUs, which `MAX_RUNNING` in `submit_conversion.sh` respects. `PARTITION=short
+./submit_conversion.sh` uses the `short` partition instead, which has no per-user cap.
+
+`tools/probe_borah.sh` reports conda, storage on `/bsushare`, partitions and GPUs, and the
+variables, sizes and headers in one water year of the archive. It is read-only:
+`bash tools/probe_borah.sh > probe_$(hostname -s)_$(date +%Y%m%d).txt 2>&1`.
 
 ## Files
 
@@ -53,7 +58,8 @@ at 384 CPUs, which `MAX_RUNNING` in `submit_conversion.sh` respects.
 | `make_timeseries_store.py` | Rechunked copy of key variables for point time series |
 | `config.yaml` | Stores, variables, chunking, paths |
 | `submit_conversion.sh`, `slurm/` | SLURM jobs |
-| `tests/` | Synthetic wrfout generator and the end-to-end test |
+| `tests/` | Synthetic WRF file generator (both layouts) and the end-to-end test |
+| `tools/probe_borah.sh` | Read-only report on Borah and one water year of the archive |
 
 ## What the conversion does
 
