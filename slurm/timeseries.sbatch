@@ -9,7 +9,7 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=48G
 #SBATCH --time=08:00:00
-#SBATCH --output=logs/%x-%A_%a.out
+#SBATCH --output=/bsuhome/%u/idaho-wrf-zarr/logs/%x-%A_%a.out
 set -euo pipefail
-source "${SLURM_SUBMIT_DIR:?submit from the repo folder}/slurm/env.sh"
+source "${WRF_ZARR_REPO:-$HOME/idaho-wrf-zarr}/slurm/env.sh"
 python make_timeseries_store.py write --config "${CONFIG:-config.yaml}" --band-rows "${BAND_ROWS:-128}"

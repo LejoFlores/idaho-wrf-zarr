@@ -1,10 +1,11 @@
 # Configuration for wrf_to_zarr.py, verify_zarr.py and make_timeseries_store.py.
-# Paths assume the scripts are cloned to /bsushare/leaf-shared/idaho-wrf-zarr.
+# The repo lives at /bsuhome/aflores/idaho-wrf-zarr. Relative paths below are relative to this
+# file's folder; the Zarr stores go next to the data on /bsushare.
 # Variable lists are a first guess; check them against inventory/variables.csv.
 # Variables a store lists but the files lack are skipped with a warning and
 # recorded in the store's attributes.
 
-inventory_dir: /bsushare/leaf-shared/idaho-wrf-zarr/inventory  # output of wrf_inventory.py
+inventory_dir: inventory                       # output of wrf_inventory.py, inside the repo
 # Source: /bsushare/leaf-shared/subset-output-wrf/volXX/wrf_out/wy_YYYY/d02 (12 volumes)
 domain: d02                                            # the 1 km domain
 duplicate_times: first                                 # first | last, when two files share an hour

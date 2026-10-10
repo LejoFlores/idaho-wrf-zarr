@@ -9,7 +9,7 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
-#SBATCH --output=logs/%x-%A_%a.out
+#SBATCH --output=/bsuhome/%u/idaho-wrf-zarr/logs/%x-%A_%a.out
 set -euo pipefail
-source "${SLURM_SUBMIT_DIR:?submit from the repo folder}/slurm/env.sh"
+source "${WRF_ZARR_REPO:-$HOME/idaho-wrf-zarr}/slurm/env.sh"
 python wrf_to_zarr.py write --config "${CONFIG:-config.yaml}" --store "${STORE:?set STORE}"

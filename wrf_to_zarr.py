@@ -71,7 +71,16 @@ EARTH_RADIUS = 6370000.0  # WRF's sphere
 # ----------------------------------------------------------------------------- setup
 
 def load_config(path):
-    cfg = yaml.safe_load(Path(path).read_text())
+    """Read the config. Relative paths in it are taken relative to the config file's folder."""
+    path = Path(path).resolve()
+    cfg = yaml.safe_load(path.read_text())
+    here = path.parent
+    for keys in (("inventory_dir",), ("grid_file",), ("output", "root")):
+        d = cfg
+        for k in keys[:-1]:
+            d = d.get(k, {})
+        if d.get(keys[-1]):
+            d[keys[-1]] = str((here / Path(d[keys[-1]]).expanduser()).resolve())
     cfg["_time_axis"] = pd.date_range(cfg["time"]["start"], cfg["time"]["end"],
                                       freq=f"{cfg['time'].get('freq_hours', 1)}h").as_unit("ns")
     return cfg

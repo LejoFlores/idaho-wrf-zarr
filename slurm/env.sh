@@ -1,5 +1,6 @@
 # Sourced by every job: activate the conda env made from environment.yml and
-# move to the repo folder. Finds conda wherever it lives:
+# move to the repo folder (default ~/idaho-wrf-zarr; set WRF_ZARR_REPO to move it).
+# Finds conda wherever it lives:
 #   1. $WRF_ZARR_CONDA_SH, if you set it to a conda.sh path
 #   2. the conda you submitted from (sbatch passes $CONDA_EXE along)
 #   3. ~/miniforge3, ~/miniconda3, ~/mambaforge or ~/anaconda3
@@ -19,6 +20,6 @@ else
 fi
 conda activate "${WRF_ZARR_ENV:-wrf-zarr}"
 echo "python: $(command -v python)"
-cd "${SLURM_SUBMIT_DIR:-$(dirname "${BASH_SOURCE[0]}")/..}"
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # the repo, wherever jobs were submitted from
 mkdir -p logs
 export HDF5_USE_FILE_LOCKING=FALSE   # avoids lock errors reading NetCDF over NFS (Borah's Isilon)

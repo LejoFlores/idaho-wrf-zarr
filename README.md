@@ -16,8 +16,8 @@ settings after the inventory.
 ## Steps
 
 ```bash
-# Clone next to the data so config.yaml's default paths work:
-cd /bsushare/leaf-shared && git clone git@github.com:LejoFlores/idaho-wrf-zarr.git && cd idaho-wrf-zarr
+# Clone into your home folder; jobs, logs and the inventory live here:
+cd /bsuhome/aflores && git clone git@github.com:LejoFlores/idaho-wrf-zarr.git && cd idaho-wrf-zarr
 conda env create -f environment.yml && conda activate wrf-zarr
 bash tests/run_synthetic_test.sh            # under two minutes; checks the install
 
@@ -37,7 +37,10 @@ python make_timeseries_store.py init --config config.yaml
 sbatch --array=0-$(( $(python make_timeseries_store.py ntasks --config config.yaml) - 1 )) slurm/timeseries.sbatch
 ```
 
-Submit jobs from the repo folder; they find `slurm/env.sh` through `$SLURM_SUBMIT_DIR`.
+Jobs run from `~/idaho-wrf-zarr` wherever you submit them, and write logs to `~/idaho-wrf-zarr/logs/`.
+The inventory goes to `~/idaho-wrf-zarr/inventory/`; the Zarr stores go to `output.root` in
+`config.yaml`, on `/bsushare` next to the data. To keep the repo elsewhere, set `WRF_ZARR_REPO`
+and change the `--output` lines in `slurm/*.sbatch`.
 `slurm/env.sh` activates the `wrf-zarr` env using the conda you submit from (or
 `$WRF_ZARR_CONDA_SH`, a few usual install folders, then the `conda/23.1.0` module);
 each job log prints which python it got. Jobs run on `bsudfq`; its QOS caps a user
