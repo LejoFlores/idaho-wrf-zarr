@@ -1,7 +1,7 @@
 # Configuration for wrf_to_zarr.py, verify_zarr.py and make_timeseries_store.py.
 # The repo lives at /bsuhome/aflores/idaho-wrf-zarr. Relative paths below are relative to this
 # file's folder; the Zarr stores go next to the data on /bsushare.
-# Variable lists are a first guess; check them against inventory/variables.csv.
+# Variable lists follow inventory/variables.csv from the 2026-10-10 inventory.
 # Variables a store lists but the files lack are skipped with a warning and
 # recorded in the store's attributes.
 
@@ -33,15 +33,19 @@ dataset_attrs:
   references: Rudisill, Flores and McNamara 2021, doi:10.1175/JHM-D-20-0018.1
 
 stores:
+  # Lists set from the inventory of 2026-10-10. About 52 variables run the full
+  # record; everything else (P, PB, HFX, PBLH, LAI, ...) exists only in one
+  # complete wrfout for 1986-10-01, so only the static store reads from it.
   static:
     # Read from the first output time; no time dimension.
-    variables: [HGT, LANDMASK, XLAND, LU_INDEX, IVGTYP, ISLTYP, COSALPHA, SINALPHA, ZS, DZS]
+    variables: [HGT, LANDMASK, XLAND, LU_INDEX, IVGTYP, ISLTYP, VEGFRA, SHDMAX, SHDMIN,
+                COSALPHA, SINALPHA, MAPFAC_M, ZS, DZS, ZNU, ZNW]
 
   surface_met:
     chunks: {time: 24}            # one object per variable per day, full map
     hours_per_task: 720           # each SLURM array task writes 30 days
-    variables: [T2, Q2, U10, V10, PSFC, SWDOWN, GLW, TSK, HFX, LH, PBLH]
-    accumulated: [RAINNC, RAINC, RAINSH]          # stored as hourly amounts named <VAR>_1h
+    variables: [T2, TH2, Q2, U10, V10, PSFC, TSK, SWDOWN, SWNORM, GLW, LWDNB, OLR, LH, GRDFLX, SR]
+    accumulated: [RAINNC, RAINC, RAINSH, SNOWNC, GRAUPELNC, HAILNC]   # hourly amounts named <VAR>_1h
     derived:
       PRECIP:
         sum_of: [RAINNC, RAINC, RAINSH]
@@ -52,18 +56,20 @@ stores:
   land_hydro:
     chunks: {time: 24}
     hours_per_task: 720
-    variables: [SNOW, SNOWH, SNOWC, ALBEDO, SMOIS, SH2O, TSLB, CANWAT]
-    accumulated: [SNOWNC, ACSNOM, SFROFF, UDROFF]
+    variables: [SNOW, SNOWH, SNOWC, ALBEDO, SNOALB, CANWAT, SMOIS, SH2O, TSLB, GDD]
+    accumulated: [ACSNOM, SFROFF, UDROFF]
 
   atmos_3d:
+    # No P or PB after the first day, so pressure on model levels can't be rebuilt
+    # from this archive; PH + PHB give geopotential height instead.
     chunks: {time: 1}             # a training sample reads one hour of the whole column
     shards: {time: 24}            # ...but objects on disk hold a day, to keep file counts down
     hours_per_task: 168
-    destagger: true               # put U, V, W, PH on the mass grid
-    variables: [U, V, W, T, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, P, PB, PH, PHB]
+    destagger: true               # put W, PH, PHB on the mass levels
+    variables: [U, V, W, T, PH, PHB, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, QGRAUP, QNICE, QNRAIN, CLDFRA]
 
 timeseries:
   # make_timeseries_store.py: a copy chunked for long series at points.
   name: surface_timeseries
-  from: {surface_met: [T2, Q2, PRECIP, SWDOWN], land_hydro: [SNOW, SNOWH]}
+  from: {surface_met: [T2, Q2, PRECIP, SWDOWN], land_hydro: [SNOW, SNOWH, ACSNOM_1h]}
   chunks: {time: 8760, y: 32, x: 32}

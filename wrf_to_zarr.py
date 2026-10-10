@@ -239,6 +239,9 @@ def read_total(cfg, src, cache, name, t):
             if bloc is None:
                 return None  # can't reconstruct the total without the bucket
             arr = arr + size * np.asarray(cache(bloc[0]).variables[bucket][bloc[1]], dtype="f4")
+        elif bloc is not None and np.any(np.asarray(cache(bloc[0]).variables[bucket][bloc[1]])):
+            raise ValueError(f"{bucket} is non-zero at {t} but the bucket size is unknown: "
+                             "set bucket_mm / bucket_j in config.yaml")
     return arr
 
 
