@@ -9,12 +9,15 @@ inventory_dir: inventory                       # output of wrf_inventory.py, ins
 # Source: /bsushare/leaf-shared/subset-output-wrf/volXX/wrf_out/wy_YYYY/d02 (12 volumes)
 domain: d02                                            # the 1 km domain
 duplicate_times: first                                 # first | last, when two files share an hour
-# A wrfout, wrfinput or geo_em file for d02. Needed only if the per-variable files lack
-# WRF's projection attributes (MAP_PROJ, TRUELAT1, ...); also supplies XLAT/XLONG.
-grid_file: null
+# Only files whose path matches this regex feed the stores. The root also holds
+# lev_interpolated/ (a WY2000-only test on 39 pressure levels) and wrf_allfield/
+# (one complete wrfout for 1986-10-01, identical to wrf_out where they overlap).
+include_paths: '/vol\d+/wrf_out/'
+# The complete wrfout: supplies the projection and XLAT/XLONG.
+grid_file: /bsushare/leaf-shared/subset-output-wrf/vol01/wrf_allfield/wrfout_d02_1986-10-01_00:00:00
 # Bucket sizes for I_<VAR> counters, used only if the files lack BUCKET_MM / BUCKET_J.
-bucket_mm: null
-bucket_j: null
+bucket_mm: 100.0             # the files also carry BUCKET_MM / BUCKET_J; these match them
+bucket_j: 1000000000.0
 
 output:
   root: /bsushare/leaf-shared/idaho-wrf-1km-zarr        # one <store>.zarr each; check quota first
@@ -33,11 +36,12 @@ dataset_attrs:
   references: Rudisill, Flores and McNamara 2021, doi:10.1175/JHM-D-20-0018.1
 
 stores:
-  # Lists set from the inventory of 2026-10-10. About 52 variables run the full
-  # record; everything else (P, PB, HFX, PBLH, LAI, ...) exists only in one
-  # complete wrfout for 1986-10-01, so only the static store reads from it.
+  # Lists set from the inventory of 2026-10-10: wrf_out holds 53 variables for the
+  # full record; the other ~220 (P, PB, HFX, PBLH, LAI, ...) exist only in the
+  # complete wrfout for 1986-10-01, which only the static store reads.
   static:
     # Read from the first output time; no time dimension.
+    include_paths: wrf_allfield
     variables: [HGT, LANDMASK, XLAND, LU_INDEX, IVGTYP, ISLTYP, VEGFRA, SHDMAX, SHDMIN,
                 COSALPHA, SINALPHA, MAPFAC_M, ZS, DZS, ZNU, ZNW]
 
@@ -65,7 +69,7 @@ stores:
     chunks: {time: 1}             # a training sample reads one hour of the whole column
     shards: {time: 24}            # ...but objects on disk hold a day, to keep file counts down
     hours_per_task: 168
-    destagger: true               # put W, PH, PHB on the mass levels
+    destagger: true               # put U, V, W, PH, PHB on the mass grid and levels
     variables: [U, V, W, T, PH, PHB, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, QGRAUP, QNICE, QNRAIN, CLDFRA]
 
 timeseries:

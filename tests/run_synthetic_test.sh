@@ -14,6 +14,8 @@ for layout in $layouts; do
   python "$here/wrf_inventory.py" --root "$work/wrf" --out "$work/inv" --workers 2 >/dev/null
   sed -e "s#^inventory_dir:.*#inventory_dir: $work/inv#" -e "s#  root: .*#  root: $work/zarr#" \
       -e 's#start: "1986-10-01T00:00"#start: "1986-09-30T00:00"#' -e 's#end: "2017-09-30T23:00"#end: "1986-10-02T23:00"#' \
+      -e "s#^include_paths:.*#include_paths: '.'#" -e "s#^grid_file:.*#grid_file: null#" \
+      -e "s#    include_paths: wrf_allfield#    include_paths: '.'#" \
       -e 's/hours_per_task: 168/hours_per_task: 48/' -e 's/chunks: {time: 8760, y: 32, x: 32}/chunks: {time: 24, y: 8, x: 8}/' \
       "$here/config.yaml" > "$work/config.yaml"
   cd "$here"
