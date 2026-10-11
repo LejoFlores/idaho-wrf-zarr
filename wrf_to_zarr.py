@@ -87,12 +87,17 @@ def load_config(path):
     return cfg
 
 
+def output_root(cfg, name):
+    """output.root, unless the store sets its own root (e.g. to put a big store on scratch)."""
+    return Path((cfg.get("stores", {}).get(name) or {}).get("root") or cfg["output"]["root"])
+
+
 def store_path(cfg, name):
-    return Path(cfg["output"]["root"]) / f"{name}.zarr"
+    return output_root(cfg, name) / f"{name}.zarr"
 
 
 def progress_dir(cfg, name):
-    return Path(cfg["output"]["root"]) / "_progress" / name
+    return output_root(cfg, name) / "_progress" / name
 
 
 class Source:
