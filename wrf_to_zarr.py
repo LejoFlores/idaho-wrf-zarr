@@ -33,6 +33,7 @@ Transformations, all recorded in each variable's attributes:
 import argparse
 import json
 import os
+import shutil
 import sys
 import time as _time
 import warnings
@@ -396,6 +397,8 @@ def cmd_init(cfg, name, overwrite):
     path = store_path(cfg, name)
     if path.exists() and not overwrite:
         sys.exit(f"{path} exists; pass --overwrite to replace it")
+    # A replaced store starts empty, so the old store's progress markers must go too.
+    shutil.rmtree(progress_dir(cfg, name), ignore_errors=True)
     sc = cfg["stores"][name]
     coords, gm, wrf_globals = coords_for(cfg, src)
     plan, skipped = plan_variables(cfg, name, src)
