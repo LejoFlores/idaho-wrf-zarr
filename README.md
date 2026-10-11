@@ -18,6 +18,7 @@ settings after the inventory.
 ```bash
 # Clone into your home folder; jobs, logs and the inventory live here:
 cd /bsuhome/aflores && git clone git@github.com:LejoFlores/idaho-wrf-zarr.git && cd idaho-wrf-zarr
+dev-session    # Borah: build envs on a compute node; the login node has a newer GLIBC
 conda env create -f environment.yml && conda activate wrf-zarr
 bash tests/run_synthetic_test.sh            # under two minutes; checks the install
 
