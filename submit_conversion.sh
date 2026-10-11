@@ -13,7 +13,12 @@ source slurm/env.sh
 CONFIG=${CONFIG:-config.yaml}
 STORES=${*:-$(python -c "import yaml;print(' '.join(yaml.safe_load(open('$CONFIG'))['stores']))")}
 for s in $STORES; do
-  python wrf_to_zarr.py init --config "$CONFIG" --store "$s"
+  # A store that already exists is resumed: finished blocks are skipped by their progress markers.
+  if [ -e "$(python -c "import wrf_to_zarr as w; print(w.store_path(w.load_config('$CONFIG'), '$s'))")" ]; then
+    echo "$s: store exists, resuming"
+  else
+    python wrf_to_zarr.py init --config "$CONFIG" --store "$s"
+  fi
   [ "$s" = static ] && continue
   n=$(python wrf_to_zarr.py ntasks --config "$CONFIG" --store "$s")
   jid=$(sbatch --parsable ${PARTITION:+-p $PARTITION} --array=0-$((n-1))%${MAX_RUNNING:-40} --export=ALL,STORE="$s",CONFIG="$CONFIG" slurm/convert.sbatch)
