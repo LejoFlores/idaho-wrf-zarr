@@ -43,7 +43,8 @@ stores:
     # Read from the first output time; no time dimension.
     include_paths: wrf_allfield
     variables: [HGT, LANDMASK, XLAND, LU_INDEX, IVGTYP, ISLTYP, VEGFRA, SHDMAX, SHDMIN,
-                COSALPHA, SINALPHA, MAPFAC_M, ZS, DZS, ZNU, ZNW]
+                COSALPHA, SINALPHA, MAPFAC_M, ZS, DZS, ZNU, ZNW,
+                PHB]   # base-state geopotential: constant in time, so stored once here
 
   surface_met:
     chunks: {time: 24}            # one object per variable per day, full map
@@ -65,12 +66,13 @@ stores:
 
   atmos_3d:
     # No P or PB after the first day, so pressure on model levels can't be rebuilt
-    # from this archive; PH + PHB give geopotential height instead.
+    # from this archive; PH + PHB (PHB in static) give geopotential height instead.
     chunks: {time: 1}             # a training sample reads one hour of the whole column
     shards: {time: 24}            # ...but objects on disk hold a day, to keep file counts down
     hours_per_task: 168
-    destagger: true               # put U, V, W, PH, PHB on the mass grid and levels
-    variables: [U, V, W, T, PH, PHB, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, QGRAUP, QNICE, QNRAIN, CLDFRA]
+    mem: 32G                      # the pilot peaked at 16.8 GB per 168-hour task
+    destagger: true               # put U, V, W, PH on the mass grid and levels
+    variables: [U, V, W, T, PH, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, QGRAUP, QNICE, QNRAIN, CLDFRA]
 
 timeseries:
   # make_timeseries_store.py: a copy chunked for long series at points.

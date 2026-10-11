@@ -21,7 +21,8 @@ for s in $STORES; do
   fi
   [ "$s" = static ] && continue
   n=$(python wrf_to_zarr.py ntasks --config "$CONFIG" --store "$s")
-  jid=$(sbatch --parsable ${PARTITION:+-p $PARTITION} --array=0-$((n-1))%${MAX_RUNNING:-40} --export=ALL,STORE="$s",CONFIG="$CONFIG" slurm/convert.sbatch)
+  mem=$(python -c "import yaml; print(yaml.safe_load(open('$CONFIG'))['stores']['$s'].get('mem', '16G'))")
+  jid=$(sbatch --parsable ${PARTITION:+-p $PARTITION} --mem="$mem" --array=0-$((n-1))%${MAX_RUNNING:-40} --export=ALL,STORE="$s",CONFIG="$CONFIG" slurm/convert.sbatch)
   sbatch ${PARTITION:+-p $PARTITION} --dependency=afterany:"$jid" --export=ALL,STORE="$s",CONFIG="$CONFIG" slurm/verify.sbatch
   echo "$s: $n tasks in job $jid"
 done
