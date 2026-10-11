@@ -97,12 +97,16 @@ def progress_dir(cfg, name):
 class Source:
     """Maps (variable, time) to (file path, index in file), from the inventory."""
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, store=None):
         inv = Path(cfg["inventory_dir"])
         f = pd.read_csv(inv / "manifest_files.csv", keep_default_na=False)
         f = f[(f["error"] == "") & (f["domain"] == cfg["domain"]) & (f["data_vars"] != "")]
+        # include_paths: a regex a file's path must match; a store may set its own.
+        include = (cfg.get("stores", {}).get(store) or {}).get("include_paths", cfg.get("include_paths"))
+        if include:
+            f = f[f["path"].str.contains(include, regex=True)]
         if f.empty:
-            sys.exit(f"no readable files for domain {cfg['domain']} in {inv}")
+            sys.exit(f"no readable files for domain {cfg['domain']} in {inv} matching {include!r}")
         self.files = f.set_index("file_id")
         self.paths = self.files["path"]
         irr = pd.read_csv(inv / "manifest_times.csv", parse_dates=["time"])
@@ -388,7 +392,7 @@ def sample(src, var, do_ds):
 
 
 def cmd_init(cfg, name, overwrite):
-    src = Source(cfg)
+    src = Source(cfg, name)
     path = store_path(cfg, name)
     if path.exists() and not overwrite:
         sys.exit(f"{path} exists; pass --overwrite to replace it")
@@ -532,7 +536,7 @@ def build_unit(cfg, name, src, cache, plan, i0, i1):
 def cmd_write(cfg, name, task, redo=False):
     if name == "static":
         sys.exit("static is written by init")
-    src = Source(cfg)
+    src = Source(cfg, name)
     path = store_path(cfg, name)
     pdir = progress_dir(cfg, name)
     u, k = unit_hours(cfg, name), units_per_task(cfg, name)

@@ -62,7 +62,7 @@ def main():
     p.add_argument("--seed", type=int, default=0)
     a = p.parse_args()
     cfg = w.load_config(a.config)
-    src = w.Source(cfg)
+    src = w.Source(cfg, a.store)
     ds = xr.open_zarr(w.store_path(cfg, a.store), consolidated=True)
     do_ds = cfg["stores"][a.store].get("destagger", True)
     plan, _ = w.plan_variables(cfg, a.store, src)
