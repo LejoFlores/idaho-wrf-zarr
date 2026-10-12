@@ -239,9 +239,10 @@ def plot(monthly, lat, lon, png, title):
                          shading="auto")
         a.set_title(f"{name} mean PW")
         a.set_aspect(1 / np.cos(np.deg2rad(float(np.mean(lat)))))
+        a.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(5))
         a.set_xlabel("Longitude")
         a.set_ylabel("Latitude")
-        fig.colorbar(m, ax=a, label="mm", shrink=0.85)
+        fig.colorbar(m, ax=a, label="mm", shrink=0.85, pad=0.02)
     fig.savefig(png, dpi=150)
     plt.close(fig)
     return clim
