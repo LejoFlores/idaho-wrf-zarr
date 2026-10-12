@@ -35,6 +35,13 @@ for layout in $layouts; do
   python tools/benchmark_pw.py --config "$work/config.yaml" --ptop 5000 --stride 1 --samples 3 --workers 2 \
       --out "$work/bench" > "$work/bench.log" || { cat "$work/bench.log"; exit 1; }
   grep -c '^- ok' "$work/bench.log" | sed 's/$/ checks ok/'
+  if command -v jupyter >/dev/null && python -c "import distributed, matplotlib" 2>/dev/null; then
+    printf '%-12s ' notebook
+    WRF_ZARR_REPO="$here" WRF_ZARR_CONFIG="$work/config.yaml" WRF_ZARR_PTOP=5000 WRF_ZARR_WORKERS=1,2 \
+      jupyter nbconvert --to notebook --execute --output-dir "$work" "$here/examples/parallel_zarr_pw.ipynb" \
+      > "$work/nb.log" 2>&1 || { tail -40 "$work/nb.log"; exit 1; }
+    echo "executed"
+  fi
   printf '%-12s ' retire
   wy=$(python -c "import pandas as pd; print(pd.read_csv('$work/inv/manifest_files.csv')['water_year'].max())")
   (cd "$work" && python "$here/tools/retire_netcdf.py" --config "$work/config.yaml" --water-year "$wy" --delete \

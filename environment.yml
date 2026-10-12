@@ -11,6 +11,8 @@ dependencies:
   - pandas
   - pyyaml
   - matplotlib  # tools/benchmark_pw.py
+  - distributed # examples/parallel_zarr_pw.ipynb
+  - jupyterlab
   - s3fs        # later: copying stores to OSN or S3
   - pip
   - pip:

@@ -73,6 +73,7 @@ variables, sizes and headers in one water year of the archive. It is read-only:
 | `submit_conversion.sh`, `slurm/` | SLURM jobs |
 | `tests/` | Synthetic WRF file generator (both layouts) and the end-to-end test |
 | `tools/benchmark_pw.py` | Precipitable-water seasonal cycle from the stores: checks against the NetCDF, read timings, PNG |
+| `examples/parallel_zarr_pw.ipynb` | Example: reading the stores in parallel with Dask workers (PW seasonal cycle, scaling test, access patterns) |
 | `tools/retire_netcdf.py` | Deletes a water year's NetCDF only where the stores hold the same data; dry run by default |
 | `tools/probe_borah.sh` | Read-only report on Borah and one water year of the archive |
 
