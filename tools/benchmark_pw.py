@@ -29,6 +29,7 @@ Checks (exit status 1 if any fails):
 import argparse
 import json
 import os
+import resource
 import sys
 import time
 from pathlib import Path
@@ -259,6 +260,7 @@ def main():
     p.add_argument("--out", default=None, help="output folder (default bench/<timestamp>)")
     a = p.parse_args()
 
+    t_start = time.perf_counter()
     cfg = w.load_config(a.config)
     out = Path(a.out or f"bench/{pd.Timestamp.now():%Y%m%d-%H%M}")
     out.mkdir(parents=True, exist_ok=True)
@@ -319,6 +321,11 @@ def main():
     plausible = bool(have.between(1, 40).all()) and (len(have) < 12 or clim[7] > clim[1])
     res["checks"]["plausible_climatology"] = {"ok": plausible, "range_mm": [float(have.min()), float(have.max())]}
 
+    ru = resource.getrusage(resource.RUSAGE_SELF)
+    res["total_wall_s"] = time.perf_counter() - t_start
+    res["cpu_s"] = ru.ru_utime + ru.ru_stime
+    res["peak_rss_GB"] = ru.ru_maxrss / 1e6  # ru_maxrss is in kB on Linux
+    res["host"] = os.uname().nodename
     (out / "benchmark.json").write_text(json.dumps(res, indent=2, default=str))
     (out / "report.md").write_text(report(res, out))
     print("\n" + (out / "report.md").read_text())
@@ -327,7 +334,10 @@ def main():
 
 
 def report(r, out):
-    L = [f"# Zarr benchmark ({r['workers']} threads)", "", "## Checks"]
+    L = [f"# Zarr benchmark on {r['host']}", "",
+         f"- {r['workers']} threads; total wall time {r['total_wall_s'] / 60:.1f} min; CPU time "
+         f"{r['cpu_s'] / 3600:.2f} h ({r['cpu_s'] / r['total_wall_s']:.1f} cores busy on average); "
+         f"peak memory {r['peak_rss_GB']:.1f} GB", "", "## Checks"]
     for k, v in r["checks"].items():
         L.append(f"- {'ok  ' if v['ok'] else 'FAIL'} {k}: " + ", ".join(f"{a}={b}" for a, b in v.items()
                                                                      if a not in ("ok", "hours")))

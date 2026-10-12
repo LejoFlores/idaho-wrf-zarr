@@ -35,6 +35,11 @@ for layout in $layouts; do
   python tools/benchmark_pw.py --config "$work/config.yaml" --ptop 5000 --stride 1 --samples 3 --workers 2 \
       --out "$work/bench" > "$work/bench.log" || { cat "$work/bench.log"; exit 1; }
   grep -c '^- ok' "$work/bench.log" | sed 's/$/ checks ok/'
+  printf '%-12s ' retire
+  wy=$(python -c "import pandas as pd; print(pd.read_csv('$work/inv/manifest_files.csv')['water_year'].max())")
+  (cd "$work" && python "$here/tools/retire_netcdf.py" --config "$work/config.yaml" --water-year "$wy" --delete \
+      > "$work/retire.log") || { cat "$work/retire.log"; exit 1; }
+  tail -1 "$work/retire.log"; tail -n +2 -q "$work"/retire/*.tsv | cut -f3,4 | sort | uniq -c | sed "s/^/             /"
   rm -rf "$work"
 done
 echo "synthetic pipeline test passed"

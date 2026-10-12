@@ -40,6 +40,11 @@ sbatch --array=0-$(( $(python make_timeseries_store.py ntasks --config config.ya
 # 5. Functional test and read benchmark (needs matplotlib): seasonal cycle of precipitable
 #    water from atmos_3d, as a PNG plus timings, in bench/<jobid>/.
 sbatch slurm/benchmark.sbatch
+
+# 6. Retire the NetCDF one water year at a time. Dry run first; it re-checks every file
+#    against the stores and deletes only files that pass (report in retire/wy_<YEAR>.tsv).
+sbatch --array=1987-2017 slurm/retire.sbatch                     # dry run
+sbatch --array=1987 --export=ALL,DELETE=1 slurm/retire.sbatch    # delete one year
 ```
 
 Jobs run from `~/idaho-wrf-zarr` wherever you submit them, and write logs to `~/idaho-wrf-zarr/logs/`.
@@ -68,6 +73,7 @@ variables, sizes and headers in one water year of the archive. It is read-only:
 | `submit_conversion.sh`, `slurm/` | SLURM jobs |
 | `tests/` | Synthetic WRF file generator (both layouts) and the end-to-end test |
 | `tools/benchmark_pw.py` | Precipitable-water seasonal cycle from the stores: checks against the NetCDF, read timings, PNG |
+| `tools/retire_netcdf.py` | Deletes a water year's NetCDF only where the stores hold the same data; dry run by default |
 | `tools/probe_borah.sh` | Read-only report on Borah and one water year of the archive |
 
 ## What the conversion does
