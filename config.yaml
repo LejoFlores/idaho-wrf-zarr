@@ -12,7 +12,7 @@ duplicate_times: first                                 # first | last, when two 
 # Only files whose path matches this regex feed the stores. The root also holds
 # lev_interpolated/ (a WY2000-only test on 39 pressure levels) and wrf_allfield/
 # (one complete wrfout for 1986-10-01, identical to wrf_out where they overlap).
-include_paths: '/vol\d+/wrf_out/'
+include_paths: '/subset-output-wrf/vol\d+/wrf_out/'   # anchored: lev_interpolated/vol04/wrf_out/ must not match
 # The complete wrfout: supplies the projection and XLAT/XLONG.
 grid_file: /bsushare/leaf-shared/subset-output-wrf/vol01/wrf_allfield/wrfout_d02_1986-10-01_00:00:00
 # Bucket sizes for I_<VAR> counters, used only if the files lack BUCKET_MM / BUCKET_J.
