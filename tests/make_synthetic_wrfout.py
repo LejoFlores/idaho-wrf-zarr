@@ -29,7 +29,7 @@ ATTRS = dict(
     DX=DX, DY=DX, GRID_ID=2, MP_PHYSICS=8, BL_PBL_PHYSICS=1, SF_SURFACE_PHYSICS=4,
     CU_PHYSICS=0, RA_LW_PHYSICS=4, RA_SW_PHYSICS=4, GRID_FDDA=0, BUCKET_MM=100.0,
 )
-DIMS = {"south_north": NY, "west_east": NX, "west_east_stag": NX + 1, "bottom_top": NZ,
+DIMS = {"south_north": NY, "west_east": NX, "west_east_stag": NX + 1, "bottom_top": NZ, "bottom_top_stag": NZ + 1,
         "soil_layers_stag": NSOIL}
 T0 = pd.Timestamp("1985-10-01")
 
@@ -77,6 +77,10 @@ def fields(times, accum_start, rate):
               np.broadcast_to(np.arange(NX + 1, dtype="f4"), (nt, NZ, NY, NX + 1))),
         "T": (("bottom_top",) + two, "K", "perturbation potential temperature", "", "f4",
               np.ones((nt, NZ, NY, NX), "f4") * h3[:, None]),
+        "QVAPOR": (("bottom_top",) + two, "kg kg-1", "Water vapor mixing ratio", "", "f4",
+                   np.ones((nt, NZ, NY, NX), "f4") * (0.006 * np.exp(-np.arange(NZ, dtype="f4") / 3))[:, None, None]),
+        "ZNW": (("bottom_top_stag",), "", "eta values on full (w) levels", "Z", "f4",
+                np.broadcast_to(np.linspace(1, 0, NZ + 1, dtype="f4"), (nt, NZ + 1))),
         "ZNU": (("bottom_top",), "", "eta values on half (mass) levels", "", "f4",
                 np.broadcast_to(np.linspace(0.99, 0.1, NZ, dtype="f4"), (nt, NZ))),
     }

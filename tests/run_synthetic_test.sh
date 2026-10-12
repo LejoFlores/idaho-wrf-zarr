@@ -31,6 +31,10 @@ for layout in $layouts; do
   python make_timeseries_store.py init --config "$work/config.yaml" >/dev/null
   n=$(python make_timeseries_store.py ntasks --config "$work/config.yaml")
   for t in $(seq 0 $((n-1))); do python make_timeseries_store.py write --config "$work/config.yaml" --task "$t" --band-rows 16 >/dev/null; done
+  printf '%-12s ' benchmark
+  python tools/benchmark_pw.py --config "$work/config.yaml" --ptop 5000 --stride 1 --samples 3 --workers 2 \
+      --out "$work/bench" > "$work/bench.log" || { cat "$work/bench.log"; exit 1; }
+  grep -c '^- ok' "$work/bench.log" | sed 's/$/ checks ok/'
   rm -rf "$work"
 done
 echo "synthetic pipeline test passed"

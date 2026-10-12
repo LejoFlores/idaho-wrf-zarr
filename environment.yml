@@ -10,6 +10,7 @@ dependencies:
   - pyproj
   - pandas
   - pyyaml
+  - matplotlib  # tools/benchmark_pw.py
   - s3fs        # later: copying stores to OSN or S3
   - pip
   - pip:

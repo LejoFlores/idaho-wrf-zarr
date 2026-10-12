@@ -36,6 +36,10 @@ python wrf_to_zarr.py status --config config.yaml --store surface_met   # what's
 # 4. After surface_met and land_hydro verify: the time-series copy.
 python make_timeseries_store.py init --config config.yaml
 sbatch --array=0-$(( $(python make_timeseries_store.py ntasks --config config.yaml) - 1 )) slurm/timeseries.sbatch
+
+# 5. Functional test and read benchmark (needs matplotlib): seasonal cycle of precipitable
+#    water from atmos_3d, as a PNG plus timings, in bench/<jobid>/.
+sbatch slurm/benchmark.sbatch
 ```
 
 Jobs run from `~/idaho-wrf-zarr` wherever you submit them, and write logs to `~/idaho-wrf-zarr/logs/`.
@@ -63,6 +67,7 @@ variables, sizes and headers in one water year of the archive. It is read-only:
 | `config.yaml` | Stores, variables, chunking, paths |
 | `submit_conversion.sh`, `slurm/` | SLURM jobs |
 | `tests/` | Synthetic WRF file generator (both layouts) and the end-to-end test |
+| `tools/benchmark_pw.py` | Precipitable-water seasonal cycle from the stores: checks against the NetCDF, read timings, PNG |
 | `tools/probe_borah.sh` | Read-only report on Borah and one water year of the archive |
 
 ## What the conversion does
