@@ -10,9 +10,12 @@ A file is deletable when every variable in it feeds a store, and:
     need their hours written, since the <VAR> check already uses them.
 
 Kept, and listed in the report:
-  * files with a variable no store holds (none expected in wrf_out)
-  * spin-up duplicates: files whose hours were all taken from another file
-    (WY1994/2006/2009 start on 16 September). Delete them with --include-duplicates.
+  * files with a variable no store holds (ACSWUPT)
+  * duplicates: files whose hours were all taken from another file. Each is
+    compared with that file at --checks random hours: "duplicate" (identical,
+    deleted only with --include-duplicates) or "duplicate-differs" (kept).
+  * a constant field (PHB) is checked against the static store's single copy
+    instead, and is deletable when every sampled hour equals it.
   * unreadable files (they are not in the manifest; SWDOWN_2009-09.nc is one)
   * anything not matching include_paths: wrf_allfield, lev_interpolated, logs
 
@@ -51,10 +54,49 @@ def coverage(cfg):
         for out, kind, spec in plan:
             if kind != "sum":  # sums are rebuilt from parts that are stored on their own
                 cover.setdefault(spec, []).append((s, out, kind))
+    # Fields that are constant in time live once in the static store (e.g. PHB);
+    # a monthly file of one is deletable if every sampled hour equals that copy.
+    static = xr.open_zarr(w.store_path(cfg, "static"), consolidated=True)
+    do_ds = cfg["stores"]["static"].get("destagger", True)
+    for v in cfg["stores"]["static"].get("variables", []):
+        if v not in cover and v in static:
+            cover[v] = [("static", v, "static")]
+    stores["static"] = (None, static, do_ds, None)
     return cover, stores
 
 
-def check_file(cfg, fid, path, names, cover, stores, taxis_ns, rng, n_checks):
+def raw_at(path, k, name, destagger):
+    """One time of a variable from one file, destaggered like the stores."""
+    da, _ = vz.raw(path, k, name)
+    da = da.astype("f4")
+    if destagger:
+        for d in [d for d in da.dims if d in w.STAGGERED]:
+            n = da.sizes[d]
+            da = xr.DataArray(0.5 * (da.isel({d: slice(0, n - 1)}).variable + da.isel({d: slice(1, n)}).variable))
+    return np.asarray(da.values)
+
+
+def check_duplicate(fid, path, targets, stores, src_all, rng, n_checks):
+    """A file whose hours all came from another file: is it an identical copy of that file?"""
+    times = src_all.times_of(fid)
+    other = None
+    for v, s, _, kind in targets:
+        if kind == "static":
+            continue
+        src = stores[s][0]
+        for k in rng.choice(len(times), min(n_checks, len(times)), replace=False):
+            loc = src.locate(v, pd.Timestamp(times[k]))
+            if loc is None:
+                return "keep", f"{v} at {pd.Timestamp(times[k])} is in no other file"
+            other = loc[0]
+            if not os.path.exists(other):
+                return "keep", f"{v}: the file the stores used ({other}) is gone, so this copy can't be compared"
+            if not np.array_equal(raw_at(path, int(k), v, False), raw_at(loc[0], loc[1], v, False), equal_nan=True):
+                return "duplicate-differs", f"{v} at {pd.Timestamp(times[k])} differs from {loc[0]}"
+    return "duplicate", f"identical to {other}"
+
+
+def check_file(cfg, fid, path, names, cover, stores, taxis_ns, rng, n_checks, src_all):
     """Return (status, note)."""
     targets = []
     for v in names:
@@ -66,6 +108,13 @@ def check_file(cfg, fid, path, names, cover, stores, taxis_ns, rng, n_checks):
     any_chosen = False
     for v, s, out, kind in targets:
         src, ds, do_ds, hp = stores[s]
+        if kind == "static":
+            n = len(src_all.times_of(fid))
+            for k in rng.choice(n, min(n_checks, n), replace=False):
+                if not np.array_equal(ds[out].values, raw_at(path, int(k), v, do_ds), equal_nan=True):
+                    return "keep", f"{v} varies in time; the static store holds one copy"
+            any_chosen = True
+            continue
         ts, fids, _ = src.index(v)
         mine = ts[fids == fid]
         if not len(mine):
@@ -94,7 +143,7 @@ def check_file(cfg, fid, path, names, cover, stores, taxis_ns, rng, n_checks):
                 if not np.allclose(got, np.maximum(d, 0), atol=1e-3, rtol=1e-4):
                     return "FAIL", f"{s}/{out} differs from the file at {t}"
     if not any_chosen:
-        return "duplicate", "all hours taken from another file (spin-up overlap)"
+        return check_duplicate(fid, path, targets, stores, src_all, rng, n_checks)
     return "ok", ""
 
 
@@ -104,7 +153,7 @@ def main():
     p.add_argument("--water-year", type=int, required=True)
     p.add_argument("--checks", type=int, default=2, help="random hours compared per file")
     p.add_argument("--delete", action="store_true", help="actually delete the files that pass")
-    p.add_argument("--include-duplicates", action="store_true", help="also delete spin-up duplicates")
+    p.add_argument("--include-duplicates", action="store_true", help="also delete files that are identical copies of the file the stores used")
     a = p.parse_args()
 
     cfg = w.load_config(a.config)
@@ -119,7 +168,7 @@ def main():
     rows = []
     for n, (fid, r) in enumerate(files.sort_values("path").iterrows(), 1):
         status, note = check_file(cfg, fid, r["path"], r["data_vars"].split(), cover, stores, taxis_ns,
-                                  rng, a.checks)
+                                  rng, a.checks, src)
         rows.append((r["path"], int(r["size_bytes"]) / 1e9, status, note))
         if status == "FAIL":
             print(f"FAIL  {r['path']}: {note}", flush=True)
