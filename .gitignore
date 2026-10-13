@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 bench/
 retire/
+examples/*.nc
+examples/dask-worker-space/
+examples/.ipynb_checkpoints/
+examples/*.html
