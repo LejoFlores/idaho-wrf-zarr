@@ -45,7 +45,9 @@ def coverage(cfg):
         src = w.Source(cfg, s)
         plan, _ = w.plan_variables(cfg, s, src)
         ds = xr.open_zarr(w.store_path(cfg, s), consolidated=True)
-        stores[s] = (src, ds, cfg["stores"][s].get("destagger", True))
+        # hour_present is read once here: in atmos_3d it spans ~11,000 shards, so
+        # reading it per file made each file take minutes.
+        stores[s] = (src, ds, cfg["stores"][s].get("destagger", True), ds["hour_present"].values)
         for out, kind, spec in plan:
             if kind != "sum":  # sums are rebuilt from parts that are stored on their own
                 cover.setdefault(spec, []).append((s, out, kind))
@@ -63,7 +65,7 @@ def check_file(cfg, fid, path, names, cover, stores, taxis_ns, rng, n_checks):
 
     any_chosen = False
     for v, s, out, kind in targets:
-        src, ds, do_ds = stores[s]
+        src, ds, do_ds, hp = stores[s]
         ts, fids, _ = src.index(v)
         mine = ts[fids == fid]
         if not len(mine):
@@ -72,7 +74,7 @@ def check_file(cfg, fid, path, names, cover, stores, taxis_ns, rng, n_checks):
         idx = np.searchsorted(taxis_ns, mine)
         inside = (idx < len(taxis_ns)) & (taxis_ns[np.minimum(idx, len(taxis_ns) - 1)] == mine)
         idx = idx[inside]
-        if np.isnan(ds["hour_present"].values[idx]).any():
+        if np.isnan(hp[idx]).any():
             return "FAIL", f"{s}: hours from this file were never written"
         if kind == "bucket" or not len(idx):
             continue
