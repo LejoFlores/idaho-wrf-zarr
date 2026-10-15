@@ -18,7 +18,9 @@ echo "$(date '+%F %T') copying $SRC -> $DST/$name"
 rsync -a --exclude='*/' "$SRC/" "$DST/$name/"
 find "$SRC" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' |
   xargs -P "${PARALLEL:-12}" -I{} sh -c 'rsync -a "$0/{}/" "$1/{}/" && echo "$(date "+%T") done {}"' "$SRC" "$DST/$name"
-rsync -a "$SRC/" "$DST/$name/"   # catch-all pass: anything missed, plus folder timestamps
+# Catch-all pass: anything missed, folder timestamps, and (--delete, inside the copy
+# only) temp files rsync left behind when a run was cut off, e.g. by a full quota.
+rsync -a --delete "$SRC/" "$DST/$name/"
 echo "$(date '+%F %T') checking"
 left=$(rsync -an --itemize-changes "$SRC/" "$DST/$name/" | wc -l)
 n_src=$(find "$SRC" -type f | wc -l); n_dst=$(find "$DST/$name" -type f | wc -l)
