@@ -35,6 +35,10 @@ for layout in $layouts; do
   python tools/benchmark_pw.py --config "$work/config.yaml" --ptop 5000 --stride 1 --samples 3 --workers 2 \
       --out "$work/bench" > "$work/bench.log" || { cat "$work/bench.log"; exit 1; }
   grep -c '^- ok' "$work/bench.log" | sed 's/$/ checks ok/'
+  printf '%-12s ' bitround
+  python tools/bitround_test.py --config "$work/config.yaml" --ptop 5000 --start 1986-09-30 --end 1986-10-02T23:00 \
+      --hours 4 --workers 2 --out "$work/bitround" > "$work/bitround.log" || { cat "$work/bitround.log"; exit 1; }
+  grep -c '^| ' "$work/bitround/report.md" | sed 's/$/ table rows/'
   if command -v jupyter >/dev/null && python -c "import distributed, matplotlib" 2>/dev/null; then
     printf '%-12s ' notebook
     WRF_ZARR_REPO="$here" WRF_ZARR_CONFIG="$work/config.yaml" WRF_ZARR_PTOP=5000 WRF_ZARR_WORKERS=1,2 \

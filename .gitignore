@@ -4,6 +4,7 @@ logs/*
 __pycache__/
 *.pyc
 bench/
+bitround/
 retire/
 examples/*.nc
 examples/dask-worker-space/
