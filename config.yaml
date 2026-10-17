@@ -70,9 +70,8 @@ stores:
     chunks: {time: 1}             # a training sample reads one hour of the whole column
     shards: {time: 24}            # ...but objects on disk hold a day, to keep file counts down
     hours_per_task: 168
-    # leaf-shared has a 150 TB hard quota that the NetCDF archive nearly fills, so this
-    # store goes to scratch until the originals are retired. Check the scratch purge policy.
-    root: /bsuscratch/aflores/idaho-wrf-1km-zarr
+    # Built on /bsuscratch/aflores while the NetCDF archive filled leaf-shared; copied
+    # here with slurm/move_store.sbatch on 2026-10-16 after the originals were retired.
     mem: 32G                      # the pilot peaked at 16.8 GB per 168-hour task
     destagger: true               # put U, V, W, PH on the mass grid and levels
     variables: [U, V, W, T, PH, QVAPOR, QCLOUD, QRAIN, QSNOW, QICE, QGRAUP, QNICE, QNRAIN, CLDFRA]
