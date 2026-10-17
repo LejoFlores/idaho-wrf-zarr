@@ -74,6 +74,7 @@ variables, sizes and headers in one water year of the archive. It is read-only:
 | `tests/` | Synthetic WRF file generator (both layouts) and the end-to-end test |
 | `tools/benchmark_pw.py` | Precipitable-water seasonal cycle from the stores: checks against the NetCDF, read timings, PNG |
 | `tools/bitround_test.py` | What bitrounding (lossy, numcodecs BitRound) would save on a store: bit information per variable, sizes and errors at keepbits 1-23, PW error. Reads only. `sbatch slurm/bitround.sbatch` |
+| `tools/compare_stores.py` | Check a moved store is identical to the original copy (metadata, hour_present, random hours bit for bit) |
 | `examples/parallel_zarr_pw.ipynb` | Example: reading the stores in parallel with Dask workers (PW seasonal cycle, scaling test, access patterns) |
 | `tools/retire_netcdf.py` | Deletes a water year's NetCDF only where the stores hold the same data; dry run by default |
 | `tools/probe_borah.sh` | Read-only report on Borah and one water year of the archive |
